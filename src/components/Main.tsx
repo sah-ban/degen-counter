@@ -49,6 +49,28 @@ export default function Main() {
   const [newTokenAmount, setNewTokenAmount] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
 
+  const formatTimeElapsed = (timestamp: string | number | undefined) => {
+    if (!timestamp || timestamp === "never") return "Never";
+    const numTimestamp = parseInt(timestamp.toString(), 10);
+    if (isNaN(numTimestamp) || numTimestamp <= 0) return "Never";
+    const now = Math.floor(Date.now() / 1000);
+    const secondsElapsed = now - numTimestamp;
+    if (secondsElapsed <= 0) return "Just now";
+    if (secondsElapsed < 60) {
+      return `${secondsElapsed} second${secondsElapsed !== 1 ? "s" : ""} ago`;
+    }
+    const minutes = Math.floor(secondsElapsed / 60);
+    if (minutes < 60) {
+      return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
+    }
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+      return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
+    }
+    const days = Math.floor(hours / 24);
+    return `${days} day${days !== 1 ? "s" : ""} ago`;
+  };
+
   const { data: totalCount } = useReadContract({
     address: COUNTER_CONTRACT_ADDRESS,
     abi: counterAbi,
@@ -152,7 +174,7 @@ export default function Main() {
       <h1>Counter DApp</h1>
 
       {!isConnected ? (
-       <Connect/>
+        <Connect />
       ) : (
         <>
           <h3>DEGEN COUNTER</h3>
@@ -164,7 +186,7 @@ export default function Main() {
             Your Count:{" "}
             {userCount !== undefined ? userCount.toString() : "Loading..."}
           </p>
-          <p>Last Increment: {lastIncrement ?? "Loading..."}</p>
+          <p>Last Increment: {formatTimeElapsed(lastIncrement)}</p>
           <p>
             Contract Token Balance:{" "}
             {contractBalance !== undefined
