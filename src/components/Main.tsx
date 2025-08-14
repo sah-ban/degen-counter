@@ -51,6 +51,9 @@ export default function Main() {
   const [approveHash, setApproveHash] = useState<Hash | undefined>(undefined);
   const { isLoading: isApproving, isSuccess: isApproved } =
     useWaitForTransactionReceipt({ hash: approveHash });
+  const [leaderboard, setLeaderboard] = useState<
+    { username: string; count: number }[]
+  >([]);
 
   const formatTimeElapsed = (timestamp: string | number | undefined) => {
     if (!timestamp || timestamp === "never") return "Never";
@@ -202,22 +205,45 @@ export default function Main() {
   }, [isApproved, depositAmount, writeContract, refetchContractBalance]);
 
   useEffect(() => {
-    if (isConfirmed) {
+    // Only refetch counts when incrementing, not when depositing tokens
+    if (isConfirmed && !depositAmount) {
       refetchTotalCount();
       refetchUserCount();
       refetchLastIncrement();
+      increment(context?.user.username || "Anonymous");
     }
-  }, [isConfirmed, refetchTotalCount, refetchUserCount, refetchLastIncrement]);
+  }, [
+    isConfirmed,
+    refetchTotalCount,
+    refetchUserCount,
+    refetchLastIncrement,
+    depositAmount,
+  ]);
 
   const isOwner =
     address && owner && address.toLowerCase() === owner?.toLowerCase();
 
+  async function increment(username: string) {
+    await fetch("/api/increment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+  }
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      const res = await fetch("/api/leaderboard");
+      const data = await res.json();
+      setLeaderboard(data.leaderboard);
+    }
+    fetchLeaderboard();
+  }, []);
+
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-
-
       {!isConnected ? (
-        <Connect/>
+        <Connect />
       ) : (
         <>
           <h3>DEGEN counter</h3>
@@ -299,6 +325,16 @@ export default function Main() {
               </div>
             </div>
           )}
+              <div>
+      <h2>Leaderboard</h2>
+      <ul>
+        {leaderboard.map((user, index) => (
+          <li key={index}>
+            {index + 1}. {user.username} — {user.count}
+          </li>
+        ))}
+      </ul>
+    </div>
         </>
       )}
     </div>
