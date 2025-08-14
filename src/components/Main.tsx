@@ -9,7 +9,7 @@ import {
   useWriteContract,
   useConnect,
 } from "wagmi";
-import { parseEther, formatEther } from "viem";
+import { parseEther, formatEther, Hash } from "viem";
 import { counterAbi } from "../contracts/abi";
 import { config } from "~/components/providers/WagmiProvider";
 
@@ -48,6 +48,9 @@ export default function Main() {
 
   const [newTokenAmount, setNewTokenAmount] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
+  const [approveHash, setApproveHash] = useState<Hash | undefined>(undefined);
+  const { isLoading: isApproving, isSuccess: isApproved } =
+    useWaitForTransactionReceipt({ hash: approveHash });
 
   const formatTimeElapsed = (timestamp: string | number | undefined) => {
     if (!timestamp || timestamp === "never") return "Never";
@@ -145,33 +148,63 @@ export default function Main() {
   const handleDepositTokens = async () => {
     if (!depositAmount) return;
     try {
-      await writeContract({
-        address: TOKEN_ADDRESS,
-        abi: counterAbi,
-        functionName: "approve",
-        args: [COUNTER_CONTRACT_ADDRESS, parseEther(depositAmount)],
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // Replace with proper transaction receipt check
-
-      await writeContract({
-        address: COUNTER_CONTRACT_ADDRESS,
-        abi: counterAbi,
-        functionName: "depositTokens",
-        args: [parseEther(depositAmount)],
-      });
-      setDepositAmount("");
+      // Step 1: Approve tokens
+      await writeContract(
+        {
+          address: TOKEN_ADDRESS,
+          abi: [
+            {
+              inputs: [
+                { internalType: "address", name: "spender", type: "address" },
+                { internalType: "uint256", name: "amount", type: "uint256" },
+              ],
+              name: "approve",
+              outputs: [{ internalType: "bool", name: "", type: "bool" }],
+              stateMutability: "nonpayable",
+              type: "function",
+            },
+          ],
+          functionName: "approve",
+          args: [COUNTER_CONTRACT_ADDRESS, parseEther(depositAmount)],
+        },
+        {
+          onSuccess: (hash) => {
+            setApproveHash(hash); // Store approve transaction hash
+          },
+        }
+      );
     } catch (error) {
-      console.error("Deposit tokens failed:", error);
+      console.error("Approve tokens failed:", error);
     }
   };
+
+  // Effect to handle deposit after approval confirmation
+  useEffect(() => {
+    if (isApproved && depositAmount) {
+      const deposit = async () => {
+        try {
+          await writeContract({
+            address: COUNTER_CONTRACT_ADDRESS,
+            abi: counterAbi,
+            functionName: "depositTokens",
+            args: [parseEther(depositAmount)],
+          });
+          setDepositAmount("");
+          setApproveHash(undefined); // Clear approve hash
+        } catch (error) {
+          console.error("Deposit tokens failed:", error);
+        }
+      };
+      deposit();
+    }
+  }, [isApproved, depositAmount, writeContract]);
 
   const isOwner =
     address && owner && address.toLowerCase() === owner?.toLowerCase();
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h1>Counter DApp</h1>
+      <h1>DEGEN counter</h1>
 
       {!isConnected ? (
         <Connect />
@@ -245,9 +278,13 @@ export default function Main() {
                 />
                 <button
                   onClick={handleDepositTokens}
-                  disabled={isPending || isConfirming}
+                  disabled={isPending || isConfirming || isApproving}
                 >
-                  Deposit Tokens
+                  {isApproving
+                    ? "Approving..."
+                    : isPending
+                    ? "Depositing..."
+                    : "Deposit Tokens"}
                 </button>
               </div>
             </div>
