@@ -74,35 +74,37 @@ export default function Main() {
     return `${days} day${days !== 1 ? "s" : ""} ago`;
   };
 
-  const { data: totalCount } = useReadContract({
+  const { data: totalCount, refetch: refetchTotalCount } = useReadContract({
     address: COUNTER_CONTRACT_ADDRESS,
     abi: counterAbi,
     functionName: "getTotalCount",
     query: { enabled: true },
-  }) as { data: bigint | undefined };
+  }) as { data: bigint | undefined; refetch: () => void };
 
-  const { data: userCount } = useReadContract({
+  const { data: userCount, refetch: refetchUserCount } = useReadContract({
     address: COUNTER_CONTRACT_ADDRESS,
     abi: counterAbi,
     functionName: "getUserCount",
     args: [address],
     query: { enabled: !!address },
-  }) as { data: bigint | undefined };
+  }) as { data: bigint | undefined; refetch: () => void };
 
-  const { data: lastIncrement } = useReadContract({
-    address: COUNTER_CONTRACT_ADDRESS,
-    abi: counterAbi,
-    functionName: "getLastIncrementTimestamp",
-    args: [address],
-    query: { enabled: !!address },
-  }) as { data: string | undefined };
+  const { data: lastIncrement, refetch: refetchLastIncrement } =
+    useReadContract({
+      address: COUNTER_CONTRACT_ADDRESS,
+      abi: counterAbi,
+      functionName: "getLastIncrementTimestamp",
+      args: [address],
+      query: { enabled: !!address },
+    }) as { data: string | undefined; refetch: () => void };
 
-  const { data: contractBalance } = useReadContract({
-    address: COUNTER_CONTRACT_ADDRESS,
-    abi: counterAbi,
-    functionName: "getContractTokenBalance",
-    query: { enabled: true },
-  }) as { data: bigint | undefined };
+  const { data: contractBalance, refetch: refetchContractBalance } =
+    useReadContract({
+      address: COUNTER_CONTRACT_ADDRESS,
+      abi: counterAbi,
+      functionName: "getContractTokenBalance",
+      query: { enabled: true },
+    }) as { data: bigint | undefined; refetch: () => void };
 
   const { data: owner } = useReadContract({
     address: COUNTER_CONTRACT_ADDRESS,
@@ -168,8 +170,8 @@ export default function Main() {
           args: [COUNTER_CONTRACT_ADDRESS, parseEther(depositAmount)],
         },
         {
-          onSuccess: (hash) => {
-            setApproveHash(hash); // Store approve transaction hash
+          onSuccess: (hash: Hash) => {
+            setApproveHash(hash);
           },
         }
       );
@@ -178,7 +180,6 @@ export default function Main() {
     }
   };
 
-  // Effect to handle deposit after approval confirmation
   useEffect(() => {
     if (isApproved && depositAmount) {
       const deposit = async () => {
@@ -190,27 +191,36 @@ export default function Main() {
             args: [parseEther(depositAmount)],
           });
           setDepositAmount("");
-          setApproveHash(undefined); // Clear approve hash
+          setApproveHash(undefined);
+          refetchContractBalance();
         } catch (error) {
           console.error("Deposit tokens failed:", error);
         }
       };
       deposit();
     }
-  }, [isApproved, depositAmount, writeContract]);
+  }, [isApproved, depositAmount, writeContract, refetchContractBalance]);
+
+  useEffect(() => {
+    if (isConfirmed) {
+      refetchTotalCount();
+      refetchUserCount();
+      refetchLastIncrement();
+    }
+  }, [isConfirmed, refetchTotalCount, refetchUserCount, refetchLastIncrement]);
 
   const isOwner =
     address && owner && address.toLowerCase() === owner?.toLowerCase();
 
   return (
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h1>DEGEN counter</h1>
+
 
       {!isConnected ? (
-        <Connect />
+        <Connect/>
       ) : (
         <>
-          <h3>DEGEN COUNTER</h3>
+          <h3>DEGEN counter</h3>
           <p>
             Total Count:{" "}
             {totalCount !== undefined ? totalCount.toString() : "Loading..."}
