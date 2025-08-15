@@ -16,6 +16,9 @@ import { config } from "~/components/providers/WagmiProvider";
 export default function Main() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<Context.MiniAppContext>();
+  const [activeDiv, setActiveDiv] = useState<"DEGEN Counter" | "Leaderboard">(
+    "DEGEN Counter"
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -205,8 +208,7 @@ export default function Main() {
   }, [isApproved, depositAmount, writeContract, refetchContractBalance]);
 
   useEffect(() => {
-    // Only refetch counts when incrementing, not when depositing tokens
-    if (isConfirmed && !depositAmount) {
+    if (isConfirmed) {
       refetchTotalCount();
       refetchUserCount();
       refetchLastIncrement();
@@ -241,176 +243,305 @@ export default function Main() {
   }, []);
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
+    <div className="absolute h-full w-full bg-slate-800 justify-center items-center flex flex-col">
       {!isConnected ? (
         <Connect />
       ) : (
-        <>
-          <h3>DEGEN counter</h3>
-          <p>
-            Total Count:{" "}
-            {totalCount !== undefined ? totalCount.toString() : "Loading..."}
-          </p>
-          <p>
-            Your Count:{" "}
-            {userCount !== undefined ? userCount.toString() : "Loading..."}
-          </p>
-          <p>Last Increment: {formatTimeElapsed(lastIncrement)}</p>
-          <p>
-            Contract Token Balance:{" "}
-            {contractBalance !== undefined
-              ? formatEther(contractBalance)
-              : "Loading..."}{" "}
-            Tokens
-          </p>
-          <p>
-            Current Token Reward:{" "}
-            {tokenAmount !== undefined
-              ? formatEther(tokenAmount)
-              : "Loading..."}{" "}
-            Tokens
-          </p>
+        <div className="relative h-screen flex flex-col text-center shadow-2xl p-3 w-full overflow-hidden z-10">
+          <header className="flex-none">
+            <div className="flex items-center">
+              <div className="flex-grow" />
+              <div className="text-3xl font-bold text-sky-400">{activeDiv}</div>
 
-          <button
-            onClick={handleIncrement}
-            disabled={isPending || isConfirming}
-          >
-            {isPending
-              ? "Pending..."
-              : isConfirming
-              ? "Confirming..."
-              : "Increment Counter"}
-          </button>
-          {writeError && (
-            <p style={{ color: "red" }}>Error: {writeError.message}</p>
-          )}
-          {isConfirmed && (
-            <p style={{ color: "green" }}>Transaction confirmed!</p>
-          )}
-
-          {isOwner && (
-            <div style={{ marginTop: "20px" }}>
-              <h3>Owner Controls</h3>
-              <div>
-                <input
-                  type="number"
-                  placeholder="New token amount (in tokens)"
-                  value={newTokenAmount}
-                  onChange={(e) => setNewTokenAmount(e.target.value)}
-                />
-                <button
-                  onClick={handleUpdateTokenAmount}
-                  disabled={isPending || isConfirming}
-                >
-                  Update Token Amount
-                </button>
-              </div>
-              <div style={{ marginTop: "10px" }}>
-                <input
-                  type="number"
-                  placeholder="Deposit amount (in tokens)"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                />
-                <button
-                  onClick={handleDepositTokens}
-                  disabled={isPending || isConfirming || isApproving}
-                >
-                  {isApproving
-                    ? "Approving..."
-                    : isPending
-                    ? "Depositing..."
-                    : "Deposit Tokens"}
-                </button>
-              </div>
+              <div className="flex-grow" />
             </div>
-          )}
-              <div>
-      <h2>Leaderboard</h2>
-      <ul>
-        {leaderboard.map((user, index) => (
-          <li key={index}>
-            {index + 1}. {user.username} — {user.count}
-          </li>
-        ))}
-      </ul>
-    </div>
-        </>
+          </header>
+
+          <main className="flex-1 overflow-auto">
+            {activeDiv === "DEGEN Counter" && <Counter />}
+            {activeDiv === "Leaderboard" && <Leaderboard />}
+          </main>
+
+          <footer className="flex-none text-center rounded-xl shadow p-2 bg-slate-900">
+            <div className="flex justify-around font-bold">
+              <button
+                className={`p-2 ${
+                  activeDiv === "DEGEN Counter"
+                    ? "bg-[#A36EFD] text-black"
+                    : "bg-gray-600 text-white"
+                } rounded`}
+                onClick={() => setActiveDiv("DEGEN Counter")}
+              >
+                Counter
+              </button>
+              <button
+                className={`p-2 ${
+                  activeDiv === "Leaderboard"
+                    ? "bg-[#A36EFD] text-black"
+                    : "bg-gray-600 text-white"
+                } rounded`}
+                onClick={() => setActiveDiv("Leaderboard")}
+              >
+                Leaderboard
+              </button>
+            </div>
+          </footer>
+        </div>
       )}
     </div>
   );
-}
 
-function Connect() {
-  const { connect } = useConnect();
-  const [isClicked, setIsClicked] = useState(false);
+  function Connect() {
+    const { connect } = useConnect();
+    const [isClicked, setIsClicked] = useState(false);
 
-  const handleConnect = () => {
-    setIsClicked(true);
-    setTimeout(() => {
-      connect({ connector: config.connectors[0] });
-    }, 500);
+    const handleConnect = () => {
+      setIsClicked(true);
+      setTimeout(() => {
+        connect({ connector: config.connectors[0] });
+      }, 500);
 
-    setTimeout(() => setIsClicked(false), 500);
-  };
+      setTimeout(() => setIsClicked(false), 500);
+    };
 
-  return (
-    <div className="flex flex-col mt-2">
-      <button
-        onClick={handleConnect}
-        className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
-        style={{
-          background:
-            "linear-gradient(90deg, #8B5CF6, #7C3AED, #A78BFA, #8B5CF6)",
-          backgroundSize: "300% 100%",
-          animation: "gradientAnimation 3s infinite ease-in-out",
-        }}
-      >
-        <div
-          className={`absolute inset-0 bg-[#38BDF8] transition-all duration-500 ${
-            isClicked ? "scale-x-100" : "scale-x-0"
-          }`}
-          style={{ transformOrigin: "center" }}
-        ></div>
-        <style>{`
+    return (
+      <div className="flex flex-col mt-2">
+        <button
+          onClick={handleConnect}
+          className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
+          style={{
+            background:
+              "linear-gradient(90deg, #8B5CF6, #7C3AED, #A78BFA, #8B5CF6)",
+            backgroundSize: "300% 100%",
+            animation: "gradientAnimation 3s infinite ease-in-out",
+          }}
+        >
+          <div
+            className={`absolute inset-0 bg-[#38BDF8] transition-all duration-500 ${
+              isClicked ? "scale-x-100" : "scale-x-0"
+            }`}
+            style={{ transformOrigin: "center" }}
+          ></div>
+          <style>{`
               @keyframes gradientAnimation {
                 0% { background-position: 0% 50%; }
                 50% { background-position: 100% 50%; }
                 100% { background-position: 0% 50%; }
               }
             `}</style>
-        <div className="flex flex-row gap-2 px-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6 relative z-10"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
-            />
-          </svg>{" "}
-          <span className="relative z-10"> {`Connect Wallet`}</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6 relative z-10"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
-            />
-          </svg>{" "}
+          <div className="flex flex-row gap-2 px-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6 relative z-10"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+              />
+            </svg>{" "}
+            <span className="relative z-10"> {`Connect Wallet`}</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6 relative z-10"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+              />
+            </svg>{" "}
+          </div>
+        </button>
+      </div>
+    );
+  }
+
+  function Counter() {
+    const [isClicked, setIsClicked] = useState(false);
+
+    const inc = () => {
+      setIsClicked(true);
+      setTimeout(() => {
+        handleIncrement();
+      }, 500);
+
+      setTimeout(() => setIsClicked(false), 500);
+    };
+
+    return (
+      <div className="relative flex flex-col items-center justify-center h-full w-full overflow-hidden">
+        {/* Your Count and Last Increment Side by Side */}
+        <div className="flex justify-around w-full mt-4 z-10">
+          <div className="flex justify-center w-full mt-4 space-x-6 z-10">
+            <div className="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-center">
+              <p className="text-gray-300 text-sm">You incremented</p>
+              <span className="text-lg font-bold text-white">
+                {userCount !== undefined ? userCount.toString() : "Loading..."}
+              </span>
+            </div>
+            <div className="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-center">
+              <p className="text-gray-300 text-sm">Last Increment</p>
+              <span className="text-lg font-bold text-white">
+                {formatTimeElapsed(lastIncrement) ?? "Loading..."}
+              </span>
+            </div>
+          </div>
         </div>
-      </button>
-    </div>
-  );
+
+        {/* Image with Total Count Overlay */}
+        <div className="relative flex flex-col items-center text-white mt-6">
+          <div className="relative flex flex-col items-center">
+            <div className="text-lg font-bold text-center">
+              Total incremented
+            </div>
+          </div>
+          <div>
+            <div className="text-center text-7xl font-extrabold text-lime-500">
+              {totalCount ?? "Loading..."}
+            </div>
+          </div>
+
+          <div className="flex flex-col mt-2">
+            <button
+              onClick={inc}
+              className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
+              style={{
+                background:
+                  "linear-gradient(90deg, #8B5CF6, #7C3AED, #A78BFA, #8B5CF6)",
+                backgroundSize: "300% 100%",
+                animation: "gradientAnimation 3s infinite ease-in-out",
+              }}
+            >
+              <div
+                className={`absolute inset-0 bg-[#38BDF8] transition-all duration-500 ${
+                  isClicked ? "scale-x-100" : "scale-x-0"
+                }`}
+                style={{ transformOrigin: "center" }}
+              ></div>
+              <style>{`
+              @keyframes gradientAnimation {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+            `}</style>
+              <div className="flex flex-row gap-2 px-5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 relative z-10"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+                  />
+                </svg>{" "}
+                <span className="relative z-10">
+                  {" "}
+                  {isPending
+                    ? "Pending..."
+                    : isConfirming
+                    ? "Incrementing..."
+                    : isConfirmed
+                    ? "Incremented!"
+                    : "Increment"}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 relative z-10"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+                  />
+                </svg>{" "}
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {isOwner && (
+          <div className="relative text-center mt-5 backdrop-blur rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700 z-10">
+            <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
+              <div>
+                <span className="font-bold text-purple-400">Balance:</span>{" "}
+                {contractBalance !== undefined ? contractBalance : "Loading..."}
+              </div>
+              <div>
+                <span className="font-bold text-purple-400">Amount:</span>{" "}
+                {tokenAmount !== undefined ? tokenAmount : "Loading..."}
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex items-center">
+                <input
+                  type="number"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full px-3 py-2 bg-gray-400 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                />
+                Deposit
+              </div>
+            </div>
+          </div>
+        )}
+
+        {writeError && (
+          <p className="relative text-red-400 text-center text-xs font-medium z-10 hidden">
+            Error: {writeError.message}
+          </p>
+        )}
+        {isConfirmed && (
+          <p className="relative text-lime-500 text-center text-base font-medium mt-4">
+            Come after 6 hours to increment again! <br />
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  function Leaderboard() {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full">
+        <div className="relative flex flex-col h-full w-full max-w-md mx-auto text-center p-6 backdrop-blur rounded-xl shadow-2xl overflow-hidden z-10">
+          <div className="flex-1 max-h-full overflow-y-auto scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-800">
+            <ul className="text-gray-300 font-medium space-y-2">
+              {leaderboard.map((user, index) => (
+                <li
+                  key={index}
+                  className="flex justify-between items-center px-3 py-2 bg-white bg-opacity-10 rounded-lg"
+                >
+                  <span className="text-lg text-white">
+                    {index + 1}. {user.username}
+                  </span>
+                  <span className="text-lg font-bold text-purple-400">
+                    {user.count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
