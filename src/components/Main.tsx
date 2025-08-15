@@ -8,10 +8,14 @@ import {
   useReadContract,
   useWriteContract,
   useConnect,
+  useChainId,
+  useSwitchChain,
 } from "wagmi";
 import { parseEther, formatEther, Hash } from "viem";
 import { counterAbi } from "../contracts/abi";
 import { config } from "~/components/providers/WagmiProvider";
+import { base } from "wagmi/chains";
+import { formatUnits } from "viem";
 
 export default function Main() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
@@ -38,6 +42,8 @@ export default function Main() {
 
   const COUNTER_CONTRACT_ADDRESS = "0xD0CB93FBB62B176D0Cf0bD739390c8a8A8C16A8D";
   const TOKEN_ADDRESS = "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed";
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
 
   const { address, isConnected } = useAccount();
   const {
@@ -49,7 +55,6 @@ export default function Main() {
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
-  const [newTokenAmount, setNewTokenAmount] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
   const [approveHash, setApproveHash] = useState<Hash | undefined>(undefined);
   const { isLoading: isApproving, isSuccess: isApproved } =
@@ -104,7 +109,7 @@ export default function Main() {
       query: { enabled: !!address },
     }) as { data: string | undefined; refetch: () => void };
 
-  const { data: contractBalance, refetch: refetchContractBalance } =
+  const { data: rawContractBalance, refetch: refetchContractBalance } =
     useReadContract({
       address: COUNTER_CONTRACT_ADDRESS,
       abi: counterAbi,
@@ -112,19 +117,18 @@ export default function Main() {
       query: { enabled: true },
     }) as { data: bigint | undefined; refetch: () => void };
 
-  const { data: owner } = useReadContract({
-    address: COUNTER_CONTRACT_ADDRESS,
-    abi: counterAbi,
-    functionName: "owner",
-    query: { enabled: true },
-  }) as { data: string | undefined };
+  const contractBalance = rawContractBalance
+    ? formatUnits(rawContractBalance, 18)
+    : "0.00";
 
-  const { data: tokenAmount } = useReadContract({
+  const { data: rawTokenAmount } = useReadContract({
     address: COUNTER_CONTRACT_ADDRESS,
     abi: counterAbi,
     functionName: "tokenAmount",
     query: { enabled: true },
   }) as { data: bigint | undefined };
+
+  const tokenAmount = rawTokenAmount ? formatUnits(rawTokenAmount, 18) : "0.00";
 
   const handleIncrement = async () => {
     try {
@@ -135,21 +139,6 @@ export default function Main() {
       });
     } catch (error) {
       console.error("Increment failed:", error);
-    }
-  };
-
-  const handleUpdateTokenAmount = async () => {
-    if (!newTokenAmount) return;
-    try {
-      await writeContract({
-        address: COUNTER_CONTRACT_ADDRESS,
-        abi: counterAbi,
-        functionName: "updateTokenAmount",
-        args: [parseEther(newTokenAmount)],
-      });
-      setNewTokenAmount("");
-    } catch (error) {
-      console.error("Update token amount failed:", error);
     }
   };
 
@@ -214,16 +203,7 @@ export default function Main() {
       refetchLastIncrement();
       increment(context?.user.username || "Anonymous");
     }
-  }, [
-    isConfirmed,
-    refetchTotalCount,
-    refetchUserCount,
-    refetchLastIncrement,
-    depositAmount,
-  ]);
-
-  const isOwner =
-    address && owner && address.toLowerCase() === owner?.toLowerCase();
+  }, [isConfirmed, refetchTotalCount, refetchUserCount, refetchLastIncrement]);
 
   async function increment(username: string) {
     await fetch("/api/increment", {
@@ -298,7 +278,11 @@ export default function Main() {
     const handleConnect = () => {
       setIsClicked(true);
       setTimeout(() => {
-        connect({ connector: config.connectors[0] });
+        if (chainId !== base.id) {
+          switchChain({ chainId: base.id });
+        } else {
+          connect({ connector: config.connectors[0] });
+        }
       }, 500);
 
       setTimeout(() => setIsClicked(false), 500);
@@ -344,7 +328,9 @@ export default function Main() {
                 d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
               />
             </svg>{" "}
-            <span className="relative z-10"> {`Connect Wallet`}</span>
+            <span className="relative z-10">
+              {chainId !== base.id ? "Switch to Base" : "Connect Wallet"}
+            </span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -495,7 +481,7 @@ export default function Main() {
           </div>
         </div>
 
-        {isOwner && (
+        {context?.user.fid === 268438 && (
           <div className="relative text-center mt-5 backdrop-blur rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700 z-10">
             <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
               <div>
@@ -516,7 +502,13 @@ export default function Main() {
                   onChange={(e) => setDepositAmount(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-400 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
                 />
-                Deposit
+                <button
+                  onClick={handleDepositTokens}
+                  disabled={isPending || isConfirming}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-700 via-purple-600 to-fuchsia-600 text-white font-medium shadow-lg ring-2 ring-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Deposit
+                </button>
               </div>
             </div>
           </div>
