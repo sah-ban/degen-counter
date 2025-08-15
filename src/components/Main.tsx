@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import sdk, { type Context } from "@farcaster/frame-sdk";
+import sdk, { type Context } from "@farcaster/miniapp-sdk";
 import {
   useAccount,
   useWaitForTransactionReceipt,
@@ -15,7 +15,7 @@ import { config } from "~/components/providers/WagmiProvider";
 
 export default function Main() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<Context.FrameContext>();
+  const [context, setContext] = useState<Context.MiniAppContext>();
 
   useEffect(() => {
     const load = async () => {
