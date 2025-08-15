@@ -368,10 +368,27 @@ export default function Main() {
   function Counter() {
     const [isClicked, setIsClicked] = useState(false);
 
+    const cast = async (): Promise<string | undefined> => {
+      try {
+        const result = await sdk.actions.composeCast({
+          text: `Just incremented the ARB counter to ${totalCount}\nminiapp by @cashlessman.eth`,
+          embeds: [`${process.env.NEXT_PUBLIC_URL}?count=${totalCount}`],
+        });
+        return result.cast?.hash;
+      } catch (error) {
+        console.error("Error composing cast:", error);
+        return undefined;
+      }
+    };
+
     const inc = () => {
       setIsClicked(true);
       setTimeout(() => {
-        handleIncrement();
+        if (isConfirmed) {
+          cast();
+        } else {
+          handleIncrement();
+        }
       }, 500);
 
       setTimeout(() => setIsClicked(false), 500);
@@ -456,7 +473,7 @@ export default function Main() {
                     : isConfirming
                     ? "Incrementing..."
                     : isConfirmed
-                    ? "Incremented!"
+                    ? "Incremented!, Cast it!"
                     : "Increment"}
                 </span>
                 <svg
