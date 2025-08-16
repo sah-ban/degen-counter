@@ -32,6 +32,14 @@ export async function generateMetadata({}: Props): Promise<Metadata> {
     openGraph: {
       title: "$DEGEN Counter",
       description: "Increment the counter",
+      images: [
+        {
+          url: `${appUrl}/og.png`,
+          width: 1200,
+          height: 630,
+          alt: "$DEGEN Counter",
+        },
+      ],
     },
     other: {
       "fc:frame": JSON.stringify(frame),
