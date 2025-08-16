@@ -222,6 +222,12 @@ export default function Main() {
     fetchLeaderboard();
   }, []);
 
+  useEffect(() => {
+    if (!context?.client.added && isConfirmed) {
+      sdk.actions.addMiniApp();
+    }
+  }, [context?.client.added, isConfirmed]);
+
   return (
     <div className="absolute h-full w-full bg-slate-800 justify-center items-center flex flex-col">
       {!isConnected ? (
