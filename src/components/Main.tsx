@@ -11,7 +11,7 @@ import {
   useChainId,
   useSwitchChain,
 } from "wagmi";
-import { parseEther, formatEther, Hash } from "viem";
+import { parseEther, Hash } from "viem";
 import { counterAbi } from "../contracts/abi";
 import { config } from "~/components/providers/WagmiProvider";
 import { base } from "wagmi/chains";
@@ -57,8 +57,9 @@ export default function Main() {
 
   const [depositAmount, setDepositAmount] = useState("");
   const [approveHash, setApproveHash] = useState<Hash | undefined>(undefined);
-  const { isLoading: isApproving, isSuccess: isApproved } =
-    useWaitForTransactionReceipt({ hash: approveHash });
+  const { isSuccess: isApproved } = useWaitForTransactionReceipt({
+    hash: approveHash,
+  });
   const [leaderboard, setLeaderboard] = useState<
     { username: string; count: number }[]
   >([]);
@@ -203,7 +204,7 @@ export default function Main() {
       refetchLastIncrement();
       increment(context?.user.username || "Anonymous");
     }
-  }, [isConfirmed, refetchTotalCount, refetchUserCount, refetchLastIncrement]);
+  }, [isConfirmed, refetchTotalCount, refetchUserCount, refetchLastIncrement, context]);
 
   async function increment(username: string) {
     await fetch("/api/increment", {
@@ -363,7 +364,7 @@ export default function Main() {
     const cast = async (): Promise<string | undefined> => {
       try {
         const result = await sdk.actions.composeCast({
-          text: `Just incremented the ARB counter to ${totalCount}\nminiapp by @cashlessman.eth`,
+          text: `Just incremented the DEGEN counter to ${totalCount}\nminiapp by @cashlessman.eth`,
           embeds: [`${process.env.NEXT_PUBLIC_URL}?count=${totalCount}`],
         });
         return result.cast?.hash;
