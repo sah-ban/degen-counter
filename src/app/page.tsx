@@ -14,7 +14,7 @@ interface Props {
 export async function generateMetadata({}: Props): Promise<Metadata> {
   const frame = {
     version: "next",
-    imageUrl: `${appUrl}/logo.png`,
+    imageUrl: `${appUrl}/og.png`,
     button: {
       title: "Increment the counter",
       action: {

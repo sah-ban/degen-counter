@@ -40,7 +40,7 @@ export default function Main() {
     }
   }, [isSDKLoaded]);
 
-  const COUNTER_CONTRACT_ADDRESS = "0xD0CB93FBB62B176D0Cf0bD739390c8a8A8C16A8D";
+  const COUNTER_CONTRACT_ADDRESS = "0xd4DF7206dC74F2CD71DcF26394a32184197A140F";
   const TOKEN_ADDRESS = "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed";
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
