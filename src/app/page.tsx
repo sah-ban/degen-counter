@@ -11,10 +11,13 @@ interface Props {
   }>;
 }
 
-export async function generateMetadata({}: Props): Promise<Metadata> {
+export async function generateMetadata({
+  searchParams,
+}: Props): Promise<Metadata> {
+  const { count } = await searchParams;
   const frame = {
     version: "next",
-    imageUrl: `${appUrl}/og.png`,
+    imageUrl: count ? `${appUrl}/og?count=${count}` : `${appUrl}/og.png`,
     button: {
       title: "Increment the counter",
       action: {
