@@ -21,8 +21,8 @@ export async function generateMetadata({}: Props): Promise<Metadata> {
         type: "launch_frame",
         name: "$DEGEN Counter",
         url: `${appUrl}`,
-        splashImageUrl: `${appUrl}/logo.png`,
-        splashBackgroundColor: "#FFFFFF",
+        splashImageUrl: `${appUrl}/splash.png`,
+        splashBackgroundColor: "#333333",
       },
     },
   };
