@@ -592,14 +592,6 @@ export default function Main() {
         <p className="text-base">
           This miniapp is designed for Fracster client only.
         </p>
-        <div
-          className="bg-yellow-400 p-2 mt-3 text-base font-semibold cursor-pointer text-white flex items-center justify-center gap-2 rounded-lg"
-          onClick={() =>
-            sdk.actions.openUrl("https://farcaster.xyz/miniapps/jrth1IniizBC/degen-counter")
-          }
-        >
-          Open in Farcaster
-        </div>
       </div>
     );
   }
