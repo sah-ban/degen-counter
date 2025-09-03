@@ -373,7 +373,7 @@ export default function Main() {
     const cast = async (): Promise<string | undefined> => {
       try {
         const result = await sdk.actions.composeCast({
-          text: `Just incremented the DEGEN counter to ${totalCount}\nminiapp by @cashlessman.eth`,
+          text: `Just incremented the DEGEN counter to ${totalCount}!`,
           embeds: [`${process.env.NEXT_PUBLIC_URL}?count=${totalCount}`],
         });
         return result.cast?.hash;
