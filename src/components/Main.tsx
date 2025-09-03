@@ -235,7 +235,7 @@ export default function Main() {
     }
   }, [context?.client.added, isConfirmed]);
 
-  if ((context?.client.clientFid !== 9125)) return <Blocked />;
+  if ((context?.client.clientFid !== 9152)) return <Blocked />;
 
   return (
     <div className="absolute h-full w-full bg-slate-800 justify-center items-center flex flex-col">
