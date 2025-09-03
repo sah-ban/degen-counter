@@ -71,19 +71,20 @@ export default function Main() {
     const now = Math.floor(Date.now() / 1000);
     const secondsElapsed = now - numTimestamp;
     if (secondsElapsed <= 0) return "Just now";
-    if (secondsElapsed < 60) {
-      return `${secondsElapsed} second${secondsElapsed !== 1 ? "s" : ""} ago`;
-    }
-    const minutes = Math.floor(secondsElapsed / 60);
-    if (minutes < 60) {
-      return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
-    }
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) {
-      return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
-    }
-    const days = Math.floor(hours / 24);
-    return `${days} day${days !== 1 ? "s" : ""} ago`;
+
+    const days = Math.floor(secondsElapsed / (24 * 60 * 60));
+    const hours = Math.floor((secondsElapsed % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((secondsElapsed % (60 * 60)) / 60);
+    const seconds = secondsElapsed % 60;
+
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (seconds > 0 && parts.length === 0)
+      parts.push(`${seconds} sec${seconds !== 1 ? "s" : ""}`);
+
+    return parts.length > 0 ? parts.join(" ") + " ago" : "Just now";
   };
 
   const { data: totalCount, refetch: refetchTotalCount } = useReadContract({
@@ -235,7 +236,7 @@ export default function Main() {
     }
   }, [context?.client.added, isConfirmed]);
 
-  if ((context?.client.clientFid !== 9152)) return <Blocked />;
+  if (context?.client.clientFid !== 9152) return <Blocked />;
 
   return (
     <div className="absolute h-full w-full bg-slate-800 justify-center items-center flex flex-col">
