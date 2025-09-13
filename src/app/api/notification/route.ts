@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
 
     await farma.sendNotification(
       `${process.env.FARMA_FRAME_ID}`,
-      `DEGEN is now DEGEN Counter`,
-      `Increment the counter every 6 hours to claim few $DEGEN!`,
+      `It's Time!`,
+      `it's time to Increment the counter!`,
       `${appUrl}`
     );
 

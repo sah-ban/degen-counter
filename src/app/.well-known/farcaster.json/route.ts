@@ -17,7 +17,7 @@ export async function GET() {
       buttonTitle: "Increment",
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#333333",
-      webhookUrl: `https://webhooks.pingem.xyz/f/041ir`,
+      webhookUrl: "https://webhooks.pingem.xyz/f/3fvr5",
     },
     baseBuilder: {
       allowedAddresses: ["0x06e5B0fd556e8dF43BC45f8343945Fb12C6C3E90"],
