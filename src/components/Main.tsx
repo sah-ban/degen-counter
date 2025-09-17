@@ -40,7 +40,7 @@ export default function Main() {
     }
   }, [isSDKLoaded]);
 
-  const COUNTER_CONTRACT_ADDRESS = "0xd4DF7206dC74F2CD71DcF26394a32184197A140F";
+  const COUNTER_CONTRACT_ADDRESS = "0x0532301b1549B9d00F951f1Cd37ac21Fb2F36699";
   const TOKEN_ADDRESS = "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed";
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
@@ -593,7 +593,7 @@ export default function Main() {
           Sorry for the inconvenience
         </h2>
         <p className="text-base">
-          This miniapp is designed for Fracster client only.
+          This miniapp is designed for Farcaster client only.
         </p>
       </div>
     );
