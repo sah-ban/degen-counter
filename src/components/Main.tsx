@@ -16,6 +16,7 @@ import { counterAbi } from "../contracts/abi";
 import { config } from "~/components/providers/WagmiProvider";
 import { base } from "wagmi/chains";
 import { formatUnits } from "viem";
+import Leaderboard from "./Leaderboard";
 
 export default function Main() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
@@ -60,9 +61,7 @@ export default function Main() {
   const { isSuccess: isApproved } = useWaitForTransactionReceipt({
     hash: approveHash,
   });
-  const [leaderboard, setLeaderboard] = useState<
-    { username: string; count: number }[]
-  >([]);
+
 
   const formatTimeElapsed = (timestamp: string | number | undefined) => {
     if (!timestamp || timestamp === "never") return "Never";
@@ -213,6 +212,12 @@ export default function Main() {
     context,
   ]);
 
+  useEffect(() => {
+    if (isConfirmed && context?.user.fid !== 268438) {
+      increment(context?.user.username || "Anonymous");
+    }
+  }, [isConfirmed, context]);
+
   async function increment(username: string) {
     await fetch("/api/increment", {
       method: "POST",
@@ -221,14 +226,7 @@ export default function Main() {
     });
   }
 
-  useEffect(() => {
-    async function fetchLeaderboard() {
-      const res = await fetch("/api/leaderboard");
-      const data = await res.json();
-      setLeaderboard(data.leaderboard);
-    }
-    fetchLeaderboard();
-  }, []);
+
 
   useEffect(() => {
     if (!context?.client.added && isConfirmed) {
@@ -546,31 +544,7 @@ export default function Main() {
     );
   }
 
-  function Leaderboard() {
-    return (
-      <div className="flex flex-col items-center justify-center h-full w-full">
-        <div className="relative flex flex-col h-full w-full max-w-md mx-auto text-center p-6 backdrop-blur rounded-xl shadow-2xl overflow-hidden z-10">
-          <div className="flex-1 max-h-full overflow-y-auto scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-800">
-            <ul className="text-gray-300 font-medium space-y-2">
-              {leaderboard.map((user, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between items-center px-3 py-2 bg-white bg-opacity-10 rounded-lg"
-                >
-                  <span className="text-lg text-white">
-                    {index + 1}. {user.username}
-                  </span>
-                  <span className="text-lg font-bold text-purple-400">
-                    {user.count}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
   function Blocked() {
     return (
       <div className="min-h-screen w-full bg-yellow-50 flex flex-col items-center justify-center text-yellow-800 text-center px-6">
