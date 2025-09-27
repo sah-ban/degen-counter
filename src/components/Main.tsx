@@ -232,6 +232,27 @@ export default function Main() {
     }
   }, [context?.client.added, isConfirmed]);
 
+  async function sendMessage(recipientFid: number, message: string) {
+    await fetch("/api/dc", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "idempotency-key": crypto.randomUUID(),
+      },
+      body: JSON.stringify({
+        recipientFid,
+        message,
+      }),
+    });
+  }
+  const balance = Number(contractBalance);
+
+  useEffect(() => {
+    if (context && rawContractBalance && balance < 69) {
+      sendMessage(268438, `Low Balance of ${contractBalance} DEGEN`);
+    }
+  }, [context, contractBalance, balance, rawContractBalance]);
+
   if (context?.client.clientFid !== 9152) return <Blocked />;
 
   if (blocked.includes(context?.user.fid || 0)) {
@@ -261,7 +282,7 @@ export default function Main() {
       </div>
     );
   }
-  
+
   return (
     <div className="absolute h-full w-full bg-slate-800 justify-center items-center flex flex-col">
       {!isConnected ? (
