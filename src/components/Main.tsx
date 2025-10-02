@@ -518,7 +518,7 @@ export default function Main() {
                 <span className="relative z-10">
                   {" "}
                   {isPending
-                    ? "Pending..."
+                    ? "Processing..."
                     : isConfirming
                     ? "Incrementing..."
                     : isConfirmed
