@@ -543,7 +543,14 @@ export default function Main() {
             </button>
           </div>
         </div>
-
+            <button
+              onClick={() =>
+                sdk.actions.openMiniApp({url: "https://quotes-miniapp.vercel.app"})
+              }
+              className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
+            >
+              Claim $ARB
+            </button>
         {context?.user.fid === 268438 && (
           <div className="relative text-center mt-5 backdrop-blur rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700 z-10">
             <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
