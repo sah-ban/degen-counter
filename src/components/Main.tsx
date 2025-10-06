@@ -215,19 +215,6 @@ export default function Main() {
     }
   }, [context?.client.added, isConfirmed]);
 
-  async function sendMessage(recipientFid: number, message: string) {
-    await fetch("/api/dc", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "idempotency-key": crypto.randomUUID(),
-      },
-      body: JSON.stringify({
-        recipientFid,
-        message,
-      }),
-    });
-  }
   const cast = async (): Promise<string | undefined> => {
     try {
       const result = await sdk.actions.composeCast({
@@ -240,7 +227,6 @@ export default function Main() {
       return undefined;
     }
   };
-  const balance = Number(contractBalance);
   const inc = () => {
     setIsClicked(true);
     setTimeout(() => {
@@ -253,12 +239,6 @@ export default function Main() {
 
     setTimeout(() => setIsClicked(false), 500);
   };
-
-  useEffect(() => {
-    if (context && rawContractBalance && balance < 69) {
-      sendMessage(268438, `Low Balance of ${contractBalance} DEGEN`);
-    }
-  }, [context, contractBalance, balance, rawContractBalance]);
 
   if (context?.client.clientFid !== 9152) return <Blocked />;
 
