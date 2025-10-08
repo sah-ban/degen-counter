@@ -5,9 +5,9 @@ export async function GET() {
     accountAssociation: {
       header:
         "eyJmaWQiOjI2ODQzOCwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDIxODA4RUUzMjBlREY2NGMwMTlBNmJiMEY3RTRiRkIzZDYyRjA2RWMifQ",
-      payload: "eyJkb21haW4iOiJkZWdlbi12Mi52ZXJjZWwuYXBwIn0",
+      payload: "eyJkb21haW4iOiJjb3VudGVyLml0c2Nhc2hsZXNzLmNvbSJ9",
       signature:
-        "MHhjMzkxYTc4MTRlMWQwNDI5MzVmNGQzYjJlYWVmNWE5YTQwNDVhN2E1YjZiNDlkZjAxMDhjZDFmN2YzYzYwMDg5NDljMDdjYzFhOGYwYjk0MWUzNzBjZDRlMjFkOTU1MGFjMjg4YjdmNDk0MzJjZGNmY2U0MDJkNzc2MmM3ZTI2ZDFj",
+        "MHhlMTRkZmE2ZDIzMWRjNWU5YWNkNjRjZWE1NDRmZjVhMzUxMjMwOWQ4ZjFmZjJiOTNmNzk5YmU4MThiNDMxOWVhNDdmMTZiNjAzZDMwMzk4ODYzNTFkNjY2ZjhjNzBhNzIwYTYyMmRhNjIxYzFjYTU1MDc4ZGQ5MTk2MDRiZDgxZTFj",
     },
     frame: {
       version: "1",
@@ -18,6 +18,7 @@ export async function GET() {
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#333333",
       webhookUrl: "https://webhooks.pingem.xyz/f/3fvr5",
+      canonicalDomain: "counter.itscashless.com",
     },
     baseBuilder: {
       allowedAddresses: ["0x06e5B0fd556e8dF43BC45f8343945Fb12C6C3E90"],
