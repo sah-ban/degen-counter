@@ -2,9 +2,6 @@ import { createConfig, http, WagmiProvider } from "wagmi";
 import { base } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
-import { walletConnect } from "wagmi/connectors";
-
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "";
 
 
 export const config = createConfig({
@@ -12,10 +9,7 @@ export const config = createConfig({
   transports: {
     [base.id]: http(),
   },
-  connectors: [farcasterMiniApp(), walletConnect({
-      projectId,
-      showQrModal: true,
-    })],
+  connectors: [farcasterMiniApp()],
 });
 
 const queryClient = new QueryClient();
