@@ -17,7 +17,7 @@ export async function GET() {
       buttonTitle: "Increment",
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#333333",
-      webhookUrl: "https://webhooks.pingem.xyz/f/3fvr5",
+      webhookUrl: `${appUrl}/api/webhook`,
       canonicalDomain: "counter.itscashless.com",
     },
     baseBuilder: {
