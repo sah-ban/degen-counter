@@ -152,19 +152,12 @@ export async function POST(request: NextRequest) {
     }
 
     const allSuccessful = results.flatMap((r) => r.successfulTokens || []);
-    const allInvalid = results.flatMap((r) => r.invalidTokens || []);
     const allRateLimited = results.flatMap((r) => r.rateLimitedTokens || []);
 
-    console.log("Final results:", {
-      successfulTokens: allSuccessful,
-      invalidTokens: allInvalid,
-      rateLimitedTokens: allRateLimited,
-    });
+
 
     return NextResponse.json({
       message: `Sent notifications to ${allSuccessful.length} users`,
-      successfulTokens: allSuccessful,
-      invalidTokens: allInvalid,
       rateLimitedTokens: allRateLimited,
     });
   } catch (error) {
