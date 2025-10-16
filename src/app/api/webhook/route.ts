@@ -12,8 +12,6 @@ import { sendFrameNotification } from "~/lib/notifs";
 
 export async function POST(request: NextRequest) {
   const requestJson = await request.json();
-    console.log("📩 Incoming webhook payload:", JSON.stringify(requestJson, null, 2));
-
   let data;
   try {
     data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar);
