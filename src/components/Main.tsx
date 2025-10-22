@@ -196,6 +196,7 @@ export default function Main() {
 
   useEffect(() => {
     if (isConfirmed) {
+      sdk.haptics.notificationOccurred("success")
       refetchTotalCount();
       refetchUserCount();
       refetchLastIncrement();
