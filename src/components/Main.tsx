@@ -321,7 +321,7 @@ export default function Main() {
           <div className="flex flex-col items-center">
             <button
               onClick={inc}
-              className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2 w-min"
+              className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
               style={{
                 background:
                   "linear-gradient(90deg, #8B5CF6, #7C3AED, #A78BFA, #8B5CF6)",
@@ -419,7 +419,7 @@ export default function Main() {
         }
       `}</style>
 
-      <footer className="flex-none fixed bottom-0 left-0 w-full p-4 text-center text-white">
+      <footer className="flex-none fixed bottom-0 left-0 w-full p-4 text-center text-white z-50">
         {context?.user.fid === 268438 && (
           <div className="relative text-center backdrop-blur rounded-xl shadow-2xl p-3 w-full max-w-md border border-gray-700 z-10">
             <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
