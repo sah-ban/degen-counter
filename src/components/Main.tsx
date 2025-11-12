@@ -196,7 +196,7 @@ export default function Main() {
 
   useEffect(() => {
     if (isConfirmed) {
-      sdk.haptics.notificationOccurred("success")
+      sdk.haptics.notificationOccurred("success");
       refetchTotalCount();
       refetchUserCount();
       refetchLastIncrement();
@@ -208,7 +208,6 @@ export default function Main() {
     refetchLastIncrement,
     context,
   ]);
-
 
   useEffect(() => {
     if (!context?.client.added && isConfirmed) {
@@ -272,180 +271,199 @@ export default function Main() {
   }
 
   return (
-    <div className="absolute h-full w-full bg-slate-800 justify-center items-center flex flex-col">
+    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a0b2e] to-[#0f172a] overflow-hidden">
       {!isConnected ? (
         <Connect />
       ) : chainId !== base.id ? (
         <Switch />
       ) : (
-        <div className="relative h-screen flex flex-col text-center shadow-2xl p-3 w-full overflow-hidden z-10">
-          <header className="flex-none">
-            <div className="flex items-center">
-              <div className="flex-grow" />
-              <div className="text-3xl font-bold text-sky-400">
-                DEGEN Counter
-              </div>
-              <div className="flex-grow" />
-            </div>
+        <div className="relative z-10 w-full max-w-md mx-4 flex flex-col h-screen">
+          {/* Header */}
+          <header className="text-center pt-8">
+            <h1 className="text-5xl font-black bg-gradient-to-r from-[#A36EFD] via-[#22D3EE] to-[#A36EFD] bg-clip-text text-transparent animate-gradient bg-[length:300%_300%]">
+              $DEGEN COUNTER
+            </h1>
+            <p className="text-gray-400 text-sm mt-2 tracking-widest uppercase">
+              Live on Base
+            </p>
           </header>
 
-          <div className="relative flex flex-col items-center justify-center h-full w-full overflow-hidden">
-            <div className="flex justify-around w-full mt-4 z-10">
-              <div className="flex justify-center w-full mt-4 space-x-6 z-10">
-                <div className="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-center">
-                  <p className="text-gray-300 text-sm">You incremented</p>
-                  <span className="text-lg font-bold text-white">
-                    {userCount !== undefined
-                      ? userCount.toString()
-                      : "Loading..."}
-                  </span>
-                </div>
-                <div className="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-center">
-                  <p className="text-gray-300 text-sm">Last Increment</p>
-                  <span className="text-lg font-bold text-white">
-                    {formatTimeElapsed(lastIncrement) ?? "Loading..."}
-                  </span>
-                </div>
-              </div>
+          {/* Stats Cards */}
+          <div className="flex justify-center gap-6 mt-8">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <p className="text-gray-300 text-xs uppercase tracking-wider text-center">
+                You incremented
+              </p>
+              <p className="text-2xl font-bold text-white mt-1 text-center">
+                {userCount ?? "0"}
+              </p>
             </div>
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <p className="text-gray-300 text-xs uppercase tracking-wider text-center">
+                Last Increment
+              </p>
+              <p className="text-2xl font-bold text-white mt-1  text-center">
+                {formatTimeElapsed(lastIncrement) ?? "—"}
+              </p>
+            </div>
+          </div>
 
-            <div className="relative flex flex-col items-center text-white mt-6">
-              <div className="relative flex flex-col items-center">
-                <div className="text-lg font-bold text-center">
-                  Total incremented
-                </div>
-              </div>
-              <div>
-                <div className="text-center text-7xl font-extrabold text-lime-500">
-                  {totalCount ?? "Loading..."}
-                </div>
-              </div>
-
-              <div className="flex flex-col mt-2">
-                <button
-                  onClick={inc}
-                  className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, #8B5CF6, #7C3AED, #A78BFA, #8B5CF6)",
-                    backgroundSize: "300% 100%",
-                    animation: "gradientAnimation 3s infinite ease-in-out",
-                  }}
-                >
-                  <div
-                    className={`absolute inset-0 bg-[#38BDF8] transition-all duration-500 ${
-                      isClicked ? "scale-x-100" : "scale-x-0"
-                    }`}
-                    style={{ transformOrigin: "center" }}
-                  ></div>
-                  <style>{`
+          {/* Total Count */}
+          <div className="text-center my-10">
+            <p className="text-gray-400 uppercase tracking-widest text-sm">
+              Total Incremented
+            </p>
+            <div className="text-8xl font-black bg-gradient-to-br from-lime-400 to-green-600 bg-clip-text text-transparent drop-shadow-2xl">
+              {totalCount?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ??
+                "0"}
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <button
+              onClick={inc}
+              className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2 w-min"
+              style={{
+                background:
+                  "linear-gradient(90deg, #8B5CF6, #7C3AED, #A78BFA, #8B5CF6)",
+                backgroundSize: "300% 100%",
+                animation: "gradientAnimation 3s infinite ease-in-out",
+              }}
+            >
+              <div
+                className={`absolute inset-0 bg-[#38BDF8] transition-all duration-500 ${
+                  isClicked ? "scale-x-100" : "scale-x-0"
+                }`}
+                style={{ transformOrigin: "center" }}
+              ></div>
+              <style>{`
               @keyframes gradientAnimation {
                 0% { background-position: 0% 50%; }
                 50% { background-position: 100% 50%; }
                 100% { background-position: 0% 50%; }
               }
             `}</style>
-                  <div className="flex flex-row gap-2 px-5">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="w-6 h-6 relative z-10"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
-                      />
-                    </svg>{" "}
-                    <span className="relative z-10">
-                      {" "}
-                      {isPending
-                        ? "Processing..."
-                        : isConfirming
-                        ? "Incrementing..."
-                        : isConfirmed
-                        ? "Incremented!, Cast it!"
-                        : "Increment"}
-                    </span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="w-6 h-6 relative z-10"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
-                      />
-                    </svg>{" "}
-                  </div>
+              <div className="flex flex-row gap-2 px-5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 relative z-10"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+                  />
+                </svg>{" "}
+                <span className="relative z-10">
+                  {" "}
+                  {isPending
+                    ? "Processing..."
+                    : isConfirming
+                    ? "Incrementing..."
+                    : isConfirmed
+                    ? "Incremented!, Cast it!"
+                    : "Increment"}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6 relative z-10"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"
+                  />
+                </svg>{" "}
+              </div>
+            </button>
+          </div>
+
+          {/* Success Message */}
+          {isConfirmed && (
+            <div className="text-center mt-8 animate-bounce">
+              <p className="text-lime-400 font-bold text-lg">
+                Come back in 6 hours to increment again!
+              </p>
+            </div>
+          )}
+          {writeError && (
+            <p className="relative text-red-400 text-center text-xs font-medium z-10 hidden">
+              Error: {writeError.message}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Global Gradient Animation */}
+      <style jsx global>{`
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .animate-gradient {
+          animation: gradient 6s ease infinite;
+        }
+      `}</style>
+
+      <footer className="flex-none fixed bottom-0 left-0 w-full p-4 text-center text-white">
+        {context?.user.fid === 268438 && (
+          <div className="relative text-center backdrop-blur rounded-xl shadow-2xl p-3 w-full max-w-md border border-gray-700 z-10">
+            <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
+              <div>
+                <span className="font-bold text-purple-400">Balance:</span>{" "}
+                {contractBalance !== undefined ? contractBalance : "Loading..."}
+              </div>
+              <div>
+                <span className="font-bold text-purple-400">Amount:</span>{" "}
+                {tokenAmount !== undefined ? tokenAmount : "Loading..."}
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex items-center justify-center gap-2">
+                <input
+                  type="number"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-1/2 px-3 py-2 bg-gray-400 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                />
+                <button
+                  onClick={handleDepositTokens}
+                  disabled={isPending || isConfirming}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-700 via-purple-600 to-fuchsia-600 text-white font-medium shadow-lg ring-2 ring-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Deposit
                 </button>
               </div>
             </div>
-            <button
-              onClick={() =>
-                sdk.actions.openMiniApp({
-                  url: "https://quotes.itscashless.com",
-                })
-              }
-              className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
-            >
-              Claim $ARB
-            </button>
-            {context?.user.fid === 268438 && (
-              <div className="relative text-center mt-5 backdrop-blur rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700 z-10">
-                <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
-                  <div>
-                    <span className="font-bold text-purple-400">Balance:</span>{" "}
-                    {contractBalance !== undefined
-                      ? contractBalance
-                      : "Loading..."}
-                  </div>
-                  <div>
-                    <span className="font-bold text-purple-400">Amount:</span>{" "}
-                    {tokenAmount !== undefined ? tokenAmount : "Loading..."}
-                  </div>
-                </div>
-
-                <div className="flex flex-col">
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                      className="w-full px-3 py-2 bg-gray-400 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                    />
-                    <button
-                      onClick={handleDepositTokens}
-                      disabled={isPending || isConfirming}
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-700 via-purple-600 to-fuchsia-600 text-white font-medium shadow-lg ring-2 ring-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Deposit
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {writeError && (
-              <p className="relative text-red-400 text-center text-xs font-medium z-10 hidden">
-                Error: {writeError.message}
-              </p>
-            )}
-            {isConfirmed && (
-              <p className="relative text-lime-500 text-center text-base font-medium mt-4">
-                Come after 6 hours to increment again! <br />
-              </p>
-            )}
           </div>
-        </div>
-      )}
+        )}
+
+        <button
+          onClick={() =>
+            sdk.actions.openMiniApp({
+              url: "https://profile.itscashless.com",
+            })
+          }
+          className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
+        >
+          Claim $USDC
+        </button>
+      </footer>
     </div>
   );
 
