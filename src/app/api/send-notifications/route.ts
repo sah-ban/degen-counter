@@ -154,7 +154,9 @@ export async function POST(request: NextRequest) {
     const allSuccessful = results.flatMap((r) => r.successfulTokens || []);
     const allRateLimited = results.flatMap((r) => r.rateLimitedTokens || []);
 
-
+    console.log(
+      `Notification sending complete. Successful: ${allSuccessful.length}, Rate-limited: ${allRateLimited.length}`
+    );
 
     return NextResponse.json({
       message: `Sent notifications to ${allSuccessful.length} users`,
