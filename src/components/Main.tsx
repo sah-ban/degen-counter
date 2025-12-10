@@ -456,12 +456,12 @@ export default function Main() {
         <button
           onClick={() =>
             sdk.actions.openMiniApp({
-              url: "https://pfp.itscashless.com",
+              url: "https://2048.itscashless.com",
             })
           }
           className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
         >
-        Mint your PFP
+       claim $ARB
         </button>
       </footer>
     </div>
