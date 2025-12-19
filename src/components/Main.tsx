@@ -240,6 +240,10 @@ export default function Main() {
     setTimeout(() => setIsClicked(false), 500);
   };
 
+  const canIncrement = lastIncrement
+    ? Date.now() / 1000 >= Number(lastIncrement) + 6 * 60 * 60
+    : true;
+
   if (context?.client.clientFid !== 9152) return <Blocked />;
 
   if (blocked.includes(context?.user.fid || 0)) {
@@ -321,6 +325,7 @@ export default function Main() {
           <div className="flex flex-col items-center">
             <button
               onClick={inc}
+              disabled={!canIncrement || isPending || isConfirming}
               className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
               style={{
                 background:
@@ -365,6 +370,8 @@ export default function Main() {
                     ? "Incrementing..."
                     : isConfirmed
                     ? "Incremented!, Cast it!"
+                    : !canIncrement
+                    ? "Cooldown Active"
                     : "Increment"}
                 </span>
                 <svg
@@ -461,7 +468,7 @@ export default function Main() {
           }
           className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
         >
-       claim $ARB
+          claim $ARB
         </button>
       </footer>
     </div>
