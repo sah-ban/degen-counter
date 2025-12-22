@@ -325,7 +325,7 @@ export default function Main() {
           <div className="flex flex-col items-center">
             <button
               onClick={inc}
-              disabled={!canIncrement || isPending || isConfirming}
+              disabled={!canIncrement && !isConfirmed}
               className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
               style={{
                 background:
