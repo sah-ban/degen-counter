@@ -463,7 +463,7 @@ export default function Main() {
         <button
           onClick={() =>
             sdk.actions.openMiniApp({
-              url: "https://2048.itscashless.com",
+              url: "https://quotes.itscashless.com",
             })
           }
           className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
