@@ -244,6 +244,33 @@ export default function Main() {
     ? Date.now() / 1000 >= Number(lastIncrement) + 6 * 60 * 60
     : true;
 
+  const [showPopup, setShowPopup] = useState(false);
+  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch(`/api/follows?fid=${context?.user.fid}`);
+        if (!res.ok) throw new Error("Failed to fetch");
+
+        const data: { isFollowing: boolean } = await res.json();
+        setIsFollowing(data.isFollowing);
+      } catch {
+        console.log("Something went wrong");
+      }
+    };
+
+    if (context?.user.fid && context?.user.fid !== 268438) {
+      fetchStatus();
+    }
+  }, [context?.user.fid]);
+
+  useEffect(() => {
+    if (isFollowing === false) {
+      setShowPopup(true);
+    }
+  }, [isFollowing]);
+
   if (context?.client.clientFid !== 9152) return <Blocked />;
 
   if (blocked.includes(context?.user.fid || 0)) {
@@ -283,6 +310,7 @@ export default function Main() {
       ) : (
         <div className="relative z-10 w-full max-w-md mx-4 flex flex-col h-screen">
           {/* Header */}
+          <Follows />
           <header className="text-center pt-8">
             <h1 className="text-5xl font-black bg-gradient-to-r from-[#A36EFD] via-[#22D3EE] to-[#A36EFD] bg-clip-text text-transparent animate-gradient bg-[length:300%_300%]">
               $DEGEN COUNTER
@@ -325,7 +353,9 @@ export default function Main() {
           <div className="flex flex-col items-center">
             <button
               onClick={inc}
-              disabled={contractBalance === "0.00" || (!canIncrement && !isConfirmed)}
+              disabled={
+                contractBalance === "0.00" || (!canIncrement && !isConfirmed)
+              }
               className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
               style={{
                 background:
@@ -651,6 +681,73 @@ export default function Main() {
           </div>
         </button>
       </div>
+    );
+  }
+
+  function Follows() {
+    return (
+      <>
+        {showPopup && (
+          <div
+            className="
+            fixed inset-0 z-50
+            flex items-center justify-center
+            bg-black/60 backdrop-blur-xl
+            text-white
+          "
+          >
+            <div
+              className="
+              relative
+              w-[90%] max-w-sm
+              rounded-2xl
+              border border-white/20
+              bg-gradient-to-br from-[#1a1a1a]/90 to-[#2a2a2a]/90
+              p-8
+              shadow-[0_20px_60px_rgba(0,0,0,0.8)]
+              animate-[scaleFadeIn_0.25s_ease-out]
+            "
+            >
+              {/* Close */}
+              <button
+                onClick={() => setShowPopup(false)}
+                className="
+                absolute top-3 right-3
+                text-gray-400 hover:text-white
+                transition
+              "
+              >
+                ✕
+              </button>
+
+              <h2 className="text-xl font-semibold text-center mb-6">
+                Follow the Developer
+              </h2>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={() =>
+                    sdk.actions.viewProfile({
+                      fid: 26838,
+                    })
+                  }
+                  className="
+                  bg-gradient-to-r from-emerald-500 to-green-500
+                  px-6 py-3
+                  rounded-xl
+                  font-medium
+                  transition-all duration-200
+                  hover:scale-105
+                  hover:shadow-[0_0_18px_rgba(34,197,94,0.6)]
+                "
+                >
+                  Follow Dev
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 }
