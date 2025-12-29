@@ -728,7 +728,7 @@ export default function Main() {
                 <button
                   onClick={() =>
                     sdk.actions.viewProfile({
-                      fid: 26838,
+                      fid: 268438,
                     })
                   }
                   className="
