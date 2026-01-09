@@ -260,7 +260,11 @@ export default function Main() {
       }
     };
 
-    if (context?.user.fid && context?.user.fid !== 268438) {
+    if (
+      context?.user.fid &&
+      context?.user.fid !== 268438 &&
+      !blocked.includes(context?.user.fid || 0)
+    ) {
       fetchStatus();
     }
   }, [context?.user.fid]);
@@ -270,6 +274,12 @@ export default function Main() {
       setShowPopup(true);
     }
   }, [isFollowing]);
+
+  useEffect(() => {
+    if (blocked.includes(context?.user.fid || 0)) {
+      sdk.actions.close();
+    }
+  }, [context?.user.fid]);
 
   if (context?.client.clientFid !== 9152) return <Blocked />;
 
