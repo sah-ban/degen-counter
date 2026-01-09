@@ -10,6 +10,7 @@ import {
   useConnect,
   useChainId,
   useSwitchChain,
+  useBalance,
 } from "wagmi";
 import { parseEther, Hash } from "viem";
 import { counterAbi } from "../contracts/abi";
@@ -38,7 +39,7 @@ export default function Main() {
     }
   }, [isSDKLoaded]);
 
-  const COUNTER_CONTRACT_ADDRESS = "0xd4DF7206dC74F2CD71DcF26394a32184197A140F";
+  const COUNTER_CONTRACT_ADDRESS = "0x788C65e0A725F460a7A568660148651C657C9Aa8";
   const TOKEN_ADDRESS = "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed";
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
@@ -59,28 +60,25 @@ export default function Main() {
     hash: approveHash,
   });
   const [isClicked, setIsClicked] = useState(false);
+  const [newTokenAmount, setNewTokenAmount] = useState("");
+  const [newCooldownHours, setNewCooldownHours] = useState("");
 
-  const formatTimeElapsed = (timestamp: string | number | undefined) => {
-    if (!timestamp || timestamp === "never") return "Never";
-    const numTimestamp = parseInt(timestamp.toString(), 10);
-    if (isNaN(numTimestamp) || numTimestamp <= 0) return "Never";
-    const now = Math.floor(Date.now() / 1000);
-    const secondsElapsed = now - numTimestamp;
-    if (secondsElapsed <= 0) return "Just now";
+  const formatTimeRemaining = (secondsRemaining: bigint | number) => {
+    const seconds = Number(secondsRemaining);
+    if (seconds <= 0) return "Ready!";
 
-    const days = Math.floor(secondsElapsed / (24 * 60 * 60));
-    const hours = Math.floor((secondsElapsed % (24 * 60 * 60)) / (60 * 60));
-    const minutes = Math.floor((secondsElapsed % (60 * 60)) / 60);
-    const seconds = secondsElapsed % 60;
+    const days = Math.floor(seconds / (24 * 60 * 60));
+    const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+    const minutes = Math.floor((seconds % (60 * 60)) / 60);
+    const secs = seconds % 60;
 
     const parts: string[] = [];
     if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}m`);
-    if (seconds > 0 && parts.length === 0)
-      parts.push(`${seconds} sec${seconds !== 1 ? "s" : ""}`);
+    if (secs > 0 && parts.length === 0) parts.push(`${secs}s`);
 
-    return parts.length > 0 ? parts.join(" ") + " ago" : "Just now";
+    return parts.length > 0 ? parts.join(" ") : "Ready!";
   };
 
   const { data: totalCount, refetch: refetchTotalCount } = useReadContract({
@@ -93,19 +91,35 @@ export default function Main() {
   const { data: userCount, refetch: refetchUserCount } = useReadContract({
     address: COUNTER_CONTRACT_ADDRESS,
     abi: counterAbi,
-    functionName: "getUserCount",
-    args: [address],
-    query: { enabled: !!address },
+    functionName: "getFidCount",
+    args: [context?.user.fid],
+    query: { enabled: !!context?.user.fid },
   }) as { data: bigint | undefined; refetch: () => void };
 
-  const { data: lastIncrement, refetch: refetchLastIncrement } =
-    useReadContract({
+  const { data: nonce, refetch: refetchNonce } = useReadContract({
+    address: COUNTER_CONTRACT_ADDRESS,
+    abi: counterAbi,
+    functionName: "fidNonces",
+    args: [context?.user.fid],
+    query: { enabled: !!context?.user.fid },
+  }) as { data: bigint | undefined; refetch: () => void };
+
+  const { data: cooldownRemaining, refetch: refetchCooldown } = useReadContract(
+    {
       address: COUNTER_CONTRACT_ADDRESS,
       abi: counterAbi,
-      functionName: "getLastIncrementTimestamp",
-      args: [address],
-      query: { enabled: !!address },
-    }) as { data: string | undefined; refetch: () => void };
+      functionName: "getCooldownRemaining",
+      args: [context?.user.fid],
+      query: { enabled: !!context?.user.fid },
+    }
+  ) as { data: bigint | undefined; refetch: () => void };
+
+  const { data: cooldownHours } = useReadContract({
+    address: COUNTER_CONTRACT_ADDRESS,
+    abi: counterAbi,
+    functionName: "cooldownHours",
+    query: { enabled: true },
+  }) as { data: bigint | undefined };
 
   const { data: rawContractBalance, refetch: refetchContractBalance } =
     useReadContract({
@@ -119,24 +133,97 @@ export default function Main() {
     ? formatUnits(rawContractBalance, 18)
     : "0.00";
 
-  const { data: rawTokenAmount } = useReadContract({
-    address: COUNTER_CONTRACT_ADDRESS,
-    abi: counterAbi,
-    functionName: "tokenAmount",
-    query: { enabled: true },
-  }) as { data: bigint | undefined };
+  // const { data: rawTokenAmount } = useReadContract({
+  //   address: COUNTER_CONTRACT_ADDRESS,
+  //   abi: counterAbi,
+  //   functionName: "tokenAmount",
+  //   query: { enabled: true },
+  // }) as { data: bigint | undefined };
 
-  const tokenAmount = rawTokenAmount ? formatUnits(rawTokenAmount, 18) : "0.00";
+  const { data: balance } = useBalance({
+    address,
+    token: TOKEN_ADDRESS,
+    chainId: base.id,
+  });
+
+  // const tokenAmount = rawTokenAmount ? formatUnits(rawTokenAmount, 18) : "0.00";
+
+  const [signature, setSignature] = useState<string | undefined>(undefined);
+
+  // Pre-fetch signature when dependencies change
+  useEffect(() => {
+    const fetchSignature = async () => {
+      if (!context?.user.fid || !address || nonce === undefined) return;
+
+      try {
+        const { token } = await sdk.quickAuth.getToken();
+        const currentNonce = nonce.toString();
+
+        const res = await fetch("/api/increment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            address: address,
+            nonce: currentNonce,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setSignature(data.signature);
+        }
+      } catch (e) {
+        console.error("Pre-fetch signature failed", e);
+      }
+    };
+
+    fetchSignature();
+  }, [context?.user.fid]);
 
   const handleIncrement = async () => {
+    if (!context?.user.fid || !address) return;
+
+    // Use pre-fetched signature or fetch on demand if missing
+    let finalSignature = signature;
+
+    if (!finalSignature) {
+      try {
+        const { token } = await sdk.quickAuth.getToken();
+        const currentNonce = nonce ? nonce.toString() : "0";
+        const res = await fetch("/api/increment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ address, nonce: currentNonce }),
+        });
+        if (!res.ok) throw new Error("Failed to fetch signature");
+        const data = await res.json();
+        finalSignature = data.signature;
+      } catch (error) {
+        console.error(error);
+        alert("Failed to prepare transaction");
+        return;
+      }
+    }
+
     try {
       await writeContract({
         address: COUNTER_CONTRACT_ADDRESS,
         abi: counterAbi,
         functionName: "incrementCounter",
+        args: [BigInt(context.user.fid), finalSignature],
       });
     } catch (error) {
       console.error("Increment failed:", error);
+      alert(
+        "Failed to increment: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
     }
   };
 
@@ -199,15 +286,52 @@ export default function Main() {
       sdk.haptics.notificationOccurred("success");
       refetchTotalCount();
       refetchUserCount();
-      refetchLastIncrement();
+      refetchNonce();
+      refetchCooldown();
     }
   }, [
     isConfirmed,
     refetchTotalCount,
     refetchUserCount,
-    refetchLastIncrement,
+    refetchNonce,
+    refetchCooldown,
     context,
   ]);
+
+  const handleUpdateTokenAmount = async () => {
+    if (!newTokenAmount) return;
+    try {
+      await writeContract({
+        address: COUNTER_CONTRACT_ADDRESS,
+        abi: counterAbi,
+        functionName: "updateTokenAmount",
+        args: [parseEther(newTokenAmount)],
+      });
+      setNewTokenAmount("");
+    } catch (error) {
+      console.error("Update token amount failed:", error);
+    }
+  };
+
+  const handleUpdateCooldown = async () => {
+    if (!newCooldownHours) return;
+    try {
+      await writeContract({
+        address: COUNTER_CONTRACT_ADDRESS,
+        abi: counterAbi,
+        functionName: "updateCooldown",
+        args: [BigInt(newCooldownHours)],
+      });
+      setNewCooldownHours("");
+    } catch (error) {
+      console.error("Update cooldown failed:", error);
+    }
+  };
+
+  const isOwner =
+    address &&
+    address.toLowerCase() ===
+      "0x21808EE320eDF64c019A6bb0F7E4bFB3d62F06Ec".toLowerCase();
 
   useEffect(() => {
     if (!context?.client.added && isConfirmed) {
@@ -240,9 +364,8 @@ export default function Main() {
     setTimeout(() => setIsClicked(false), 500);
   };
 
-  const canIncrement = lastIncrement
-    ? Date.now() / 1000 >= Number(lastIncrement) + 6 * 60 * 60
-    : true;
+  const canIncrement =
+    cooldownRemaining !== undefined ? cooldownRemaining === BigInt(0) : true;
 
   const [showPopup, setShowPopup] = useState(false);
   const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
@@ -283,34 +406,6 @@ export default function Main() {
 
   if (context?.client.clientFid !== 9152) return <Blocked />;
 
-  if (blocked.includes(context?.user.fid || 0)) {
-    return (
-      <div className="min-h-screen w-full bg-yellow-50 flex flex-col items-center justify-center text-yellow-800 text-center px-6">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="size-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-          />
-        </svg>
-
-        <h2 className="text-xl font-semibold mb-2">
-          Sorry for the inconvenience
-        </h2>
-        <p className="text-base">
-          This miniapp is currently undergoing maintenance.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a0b2e] to-[#0f172a] overflow-hidden">
       {!isConnected ? (
@@ -342,10 +437,12 @@ export default function Main() {
             </div>
             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-5 shadow-2xl transform hover:scale-105 transition-all duration-300">
               <p className="text-gray-300 text-xs uppercase tracking-wider text-center">
-                Last Increment
+                Next Increment
               </p>
               <p className="text-2xl font-bold text-white mt-1  text-center">
-                {formatTimeElapsed(lastIncrement) ?? "—"}
+                {cooldownRemaining !== undefined
+                  ? formatTimeRemaining(cooldownRemaining)
+                  : "—"}
               </p>
             </div>
           </div>
@@ -363,9 +460,7 @@ export default function Main() {
           <div className="flex flex-col items-center">
             <button
               onClick={inc}
-              disabled={
-                contractBalance === "0.00" || (!canIncrement && !isConfirmed)
-              }
+              disabled={!canIncrement && !isConfirmed}
               className="text-white text-center py-2 rounded-xl font-semibold text-lg shadow-lg relative overflow-hidden transform transition-all duration-200 hover:scale-110 active:scale-95 flex items-center justify-center gap-2"
               style={{
                 background:
@@ -436,7 +531,8 @@ export default function Main() {
           {isConfirmed && (
             <div className="text-center mt-8 animate-bounce">
               <p className="text-lime-400 font-bold text-lg">
-                Come back in 6 hours to increment again!
+                Come back in {cooldownHours ? Number(cooldownHours) : 6} hours
+                to increment again!
               </p>
             </div>
           )}
@@ -468,35 +564,81 @@ export default function Main() {
 
       <footer className="flex-none fixed bottom-0 left-0 w-full p-4 text-center text-white z-50">
         {context?.user.fid === 268438 && (
-          <div className="relative text-center backdrop-blur rounded-xl shadow-2xl p-3 w-full max-w-md border border-gray-700 z-10">
-            <div className="text-gray-300 font-medium flex flex-row space-x-2 justify-center">
+          <div className="relative text-center backdrop-blur rounded-xl shadow-2xl p-4 w-full max-w-md border border-gray-700 z-10 space-y-3">
+            {/* Current Stats */}
+            <div className="text-gray-300 font-medium flex flex-row space-x-4 justify-center text-sm">
               <div>
-                <span className="font-bold text-purple-400">Balance:</span>{" "}
-                {contractBalance !== undefined ? contractBalance : "Loading..."}
+                <span className="font-bold text-purple-400">vault:</span>{" "}
+                <strong>{contractBalance}</strong>
               </div>
               <div>
-                <span className="font-bold text-purple-400">Amount:</span>{" "}
-                {tokenAmount !== undefined ? tokenAmount : "Loading..."}
+                <span className="font-bold text-purple-400">wallet:</span>{" "}
+                {balance && (
+                  <strong>
+                    {Number(formatUnits(balance.value, 18)).toFixed(2)}
+                  </strong>
+                )}
               </div>
             </div>
 
-            <div className="flex flex-col">
-              <div className="flex items-center justify-center gap-2">
-                <input
-                  type="number"
-                  value={depositAmount}
-                  onChange={(e) => setDepositAmount(e.target.value)}
-                  className="w-1/2 px-3 py-2 bg-gray-400 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                />
-                <button
-                  onClick={handleDepositTokens}
-                  disabled={isPending || isConfirming}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-700 via-purple-600 to-fuchsia-600 text-white font-medium shadow-lg ring-2 ring-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Deposit
-                </button>
-              </div>
+            {/* Deposit Tokens */}
+            <div className="flex items-center justify-center gap-2">
+              <input
+                type="number"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                placeholder="DEGEN"
+                className="w-1/3 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 text-sm"
+              />
+              <button
+                onClick={handleDepositTokens}
+                disabled={isPending}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-700 via-purple-600 to-fuchsia-600 text-white font-medium shadow-lg ring-2 ring-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                Deposit
+              </button>
             </div>
+
+            {/* Update Token Amount */}
+
+            {isOwner && (
+              <>
+                <div className="flex items-center justify-center gap-2">
+                  <input
+                    type="number"
+                    value={newTokenAmount}
+                    onChange={(e) => setNewTokenAmount(e.target.value)}
+                    placeholder="New token amount"
+                    className="w-1/3 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 text-sm"
+                  />
+                  <button
+                    onClick={handleUpdateTokenAmount}
+                    disabled={isPending}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    Update Amount
+                  </button>
+                </div>
+
+                {/* Update Cooldown */}
+                <div className="flex items-center justify-center gap-2">
+                  <input
+                    type="number"
+                    value={newCooldownHours}
+                    onChange={(e) => setNewCooldownHours(e.target.value)}
+                    placeholder="New cooldown (hours)"
+                    className="w-1/3 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 text-sm"
+                  />
+                  <button
+                    onClick={handleUpdateCooldown}
+                    disabled={isPending}
+                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    Update Cooldown
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -506,7 +648,7 @@ export default function Main() {
               url: "https://quotes.itscashless.com",
             })
           }
-          className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3"
+          className="bg-[#7C3AED] text-white px-4 py-2 rounded-lg hover:bg-[#38BDF8] transition cursor-pointer font-semibold mt-4 w-2/3 hidden"
         >
           claim $ARB
         </button>
