@@ -404,7 +404,7 @@ export default function Main() {
     }
   }, [context?.user.fid]);
 
-  if (context?.client.clientFid !== 9152) return <Blocked />;
+  // if (context?.client.clientFid !== 9152) return <Blocked />;
 
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a0b2e] to-[#0f172a] overflow-hidden">
@@ -736,33 +736,33 @@ export default function Main() {
     );
   }
 
-  function Blocked() {
-    return (
-      <div className="min-h-screen w-full bg-yellow-50 flex flex-col items-center justify-center text-yellow-800 text-center px-6">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="size-6"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
-          />
-        </svg>
+  // function Blocked() {
+  //   return (
+  //     <div className="min-h-screen w-full bg-yellow-50 flex flex-col items-center justify-center text-yellow-800 text-center px-6">
+  //       <svg
+  //         xmlns="http://www.w3.org/2000/svg"
+  //         fill="none"
+  //         viewBox="0 0 24 24"
+  //         strokeWidth={1.5}
+  //         stroke="currentColor"
+  //         className="size-6"
+  //       >
+  //         <path
+  //           strokeLinecap="round"
+  //           strokeLinejoin="round"
+  //           d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+  //         />
+  //       </svg>
 
-        <h2 className="text-xl font-semibold mb-2">
-          Sorry for the inconvenience
-        </h2>
-        <p className="text-base">
-          This miniapp is designed for Farcaster client only.
-        </p>
-      </div>
-    );
-  }
+  //       <h2 className="text-xl font-semibold mb-2">
+  //         Sorry for the inconvenience
+  //       </h2>
+  //       <p className="text-base">
+  //         This miniapp is designed for Farcaster client only.
+  //       </p>
+  //     </div>
+  //   );
+  // }
   function Switch() {
     const [isClicked, setIsClicked] = useState(false);
 
