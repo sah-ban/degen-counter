@@ -65,7 +65,7 @@ export default function Main() {
 
   const formatTimeRemaining = (secondsRemaining: bigint | number) => {
     const seconds = Number(secondsRemaining);
-    if (seconds <= 0) return "Ready!";
+    if (seconds <= 0) return "Now!";
 
     const days = Math.floor(seconds / (24 * 60 * 60));
     const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
@@ -76,9 +76,9 @@ export default function Main() {
     if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}m`);
-    if (secs > 0 && parts.length === 0) parts.push(`${secs}s`);
+    if (secs > 0) parts.push(`${secs}s`);
 
-    return parts.length > 0 ? parts.join(" ") : "Ready!";
+    return parts.length > 0 ? parts.join(" ") : "Now!";
   };
 
   const { data: totalCount, refetch: refetchTotalCount } = useReadContract({
@@ -406,6 +406,39 @@ export default function Main() {
 
   // if (context?.client.clientFid !== 9152) return <Blocked />;
 
+  const [secondsLeft, setSecondsLeft] = useState<number>(0);
+
+  const [targetEndTime, setTargetEndTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (cooldownRemaining !== undefined) {
+      const remaining = Number(cooldownRemaining);
+      const target = Math.floor(Date.now() / 1000) + remaining;
+
+      // Only update if it's a significant change (more than 5s difference)
+      // to avoid jumping on every RPC refetch
+      if (!targetEndTime || Math.abs(target - targetEndTime) > 5) {
+        setTargetEndTime(target);
+        setSecondsLeft(remaining);
+      }
+    }
+  }, [cooldownRemaining, targetEndTime]);
+
+  useEffect(() => {
+    if (!targetEndTime) return;
+
+    const updateTimer = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = Math.max(0, targetEndTime - now);
+      setSecondsLeft(remaining);
+    };
+
+    const interval = setInterval(updateTimer, 1000);
+    updateTimer(); // Initial call
+
+    return () => clearInterval(interval);
+  }, [targetEndTime]);
+
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a0b2e] to-[#0f172a] overflow-hidden">
       {!isConnected ? (
@@ -440,9 +473,7 @@ export default function Main() {
                 Next Increment
               </p>
               <p className="text-2xl font-bold text-white mt-1  text-center">
-                {cooldownRemaining !== undefined
-                  ? formatTimeRemaining(cooldownRemaining)
-                  : "—"}
+                {secondsLeft > 0 ? formatTimeRemaining(secondsLeft) : "Now!"}
               </p>
             </div>
           </div>
