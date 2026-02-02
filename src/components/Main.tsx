@@ -368,35 +368,39 @@ export default function Main() {
     cooldownRemaining !== undefined ? cooldownRemaining === BigInt(0) : true;
 
   const [showPopup, setShowPopup] = useState(false);
-  const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+  // const [isFollowing, setIsFollowing] = useState<boolean | null>(null);
+
+  // useEffect(() => {
+  //   const fetchStatus = async () => {
+  //     try {
+  //       const res = await fetch(`/api/follows?fid=${context?.user.fid}`);
+  //       if (!res.ok) throw new Error("Failed to fetch");
+
+  //       const data: { isFollowing: boolean } = await res.json();
+  //       setIsFollowing(data.isFollowing);
+  //     } catch {
+  //       console.log("Something went wrong");
+  //     }
+  //   };
+
+  //   if (
+  //     context?.user.fid &&
+  //     context?.user.fid !== 268438 &&
+  //     !blocked.includes(context?.user.fid || 0)
+  //   ) {
+  //     fetchStatus();
+  //   }
+  // }, [context?.user.fid]);
+
+  // useEffect(() => {
+  //   if (isFollowing === false) {
+  //     setShowPopup(true);
+  //   }
+  // }, [isFollowing]);
 
   useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch(`/api/follows?fid=${context?.user.fid}`);
-        if (!res.ok) throw new Error("Failed to fetch");
-
-        const data: { isFollowing: boolean } = await res.json();
-        setIsFollowing(data.isFollowing);
-      } catch {
-        console.log("Something went wrong");
-      }
-    };
-
-    if (
-      context?.user.fid &&
-      context?.user.fid !== 268438 &&
-      !blocked.includes(context?.user.fid || 0)
-    ) {
-      fetchStatus();
-    }
-  }, [context?.user.fid]);
-
-  useEffect(() => {
-    if (isFollowing === false) {
-      setShowPopup(true);
-    }
-  }, [isFollowing]);
+    setShowPopup(true);
+  }, []);
 
   useEffect(() => {
     if (blocked.includes(context?.user.fid || 0)) {
@@ -910,9 +914,9 @@ export default function Main() {
               <div className="flex justify-center">
                 <button
                   onClick={() =>
-                    sdk.actions.viewProfile({
-                      fid: 268438,
-                    })
+                    sdk.actions.openUrl(
+                      "https://x.com/intent/user?screen_name=kashlessman",
+                    )
                   }
                   className="
                   bg-gradient-to-r from-emerald-500 to-green-500
@@ -924,7 +928,7 @@ export default function Main() {
                   hover:shadow-[0_0_18px_rgba(34,197,94,0.6)]
                 "
                 >
-                  Follow Dev
+                  Follow on 𝕏
                 </button>
               </div>
             </div>
