@@ -18,6 +18,7 @@ import { config } from "~/components/providers/WagmiProvider";
 import { base } from "wagmi/chains";
 import { formatUnits } from "viem";
 import { blocked } from "./blocked";
+import { useSearchParams } from "next/navigation";
 
 export default function Main() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
@@ -111,7 +112,7 @@ export default function Main() {
       functionName: "getCooldownRemaining",
       args: [context?.user.fid],
       query: { enabled: !!context?.user.fid },
-    }
+    },
   ) as { data: bigint | undefined; refetch: () => void };
 
   const { data: cooldownHours } = useReadContract({
@@ -222,7 +223,7 @@ export default function Main() {
       console.error("Increment failed:", error);
       alert(
         "Failed to increment: " +
-          (error instanceof Error ? error.message : "Unknown error")
+          (error instanceof Error ? error.message : "Unknown error"),
       );
     }
   };
@@ -253,7 +254,7 @@ export default function Main() {
           onSuccess: (hash: Hash) => {
             setApproveHash(hash);
           },
-        }
+        },
       );
     } catch (error) {
       console.error("Approve tokens failed:", error);
@@ -398,9 +399,9 @@ export default function Main() {
   //   }
   // }, [isFollowing]);
 
-  useEffect(() => {
-    setShowPopup(true);
-  }, []);
+  // useEffect(() => {
+  //   setShowPopup(true);
+  // }, []);
 
   useEffect(() => {
     if (blocked.includes(context?.user.fid || 0)) {
@@ -442,6 +443,15 @@ export default function Main() {
 
     return () => clearInterval(interval);
   }, [targetEndTime]);
+
+  const searchParams = useSearchParams();
+  const param = searchParams.get("x");
+
+  useEffect(() => {
+    if (param === "follow" && context) {
+      sdk.actions.openUrl("https://x.com/intent/user?screen_name=kashlessman");
+    }
+  }, [context, param]);
 
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#0f0f1a] via-[#1a0b2e] to-[#0f172a] overflow-hidden">
@@ -537,12 +547,12 @@ export default function Main() {
                   {isPending
                     ? "Processing..."
                     : isConfirming
-                    ? "Incrementing..."
-                    : isConfirmed
-                    ? "Incremented!, Cast it!"
-                    : !canIncrement
-                    ? "Cooldown Active"
-                    : "Increment"}
+                      ? "Incrementing..."
+                      : isConfirmed
+                        ? "Incremented!, Cast it!"
+                        : !canIncrement
+                          ? "Cooldown Active"
+                          : "Increment"}
                 </span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
