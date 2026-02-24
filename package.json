@@ -17,11 +17,12 @@
     "@upstash/redis": "^1.35.5",
     "axios": "^1.13.2",
     "next": "15.0.5",
+    "ox": "^0.13.1",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "viem": "^2.23.6",
-    "wagmi": "^2.14.12"
+    "viem": "^2.46.3",
+    "wagmi": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^20",
