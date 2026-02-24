@@ -10,7 +10,6 @@ import {
   useConnect,
   useChainId,
   useSwitchChain,
-  useBalance,
 } from "wagmi";
 import { parseEther, Hash } from "viem";
 import { counterAbi } from "../contracts/abi";
@@ -141,11 +140,24 @@ export default function Main() {
   //   query: { enabled: true },
   // }) as { data: bigint | undefined };
 
-  const { data: balance } = useBalance({
-    address,
-    token: TOKEN_ADDRESS,
+  const { data: rawBalance } = useReadContract({
+    address: TOKEN_ADDRESS,
+    abi: [
+      {
+        inputs: [{ internalType: "address", name: "account", type: "address" }],
+        name: "balanceOf",
+        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ] as const,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
     chainId: base.id,
+    query: { enabled: !!address },
   });
+  const balance =
+    rawBalance !== undefined ? { value: rawBalance as bigint } : undefined;
 
   // const tokenAmount = rawTokenAmount ? formatUnits(rawTokenAmount, 18) : "0.00";
 
