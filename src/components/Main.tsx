@@ -6,14 +6,18 @@ import {
   useAccount,
   useWaitForTransactionReceipt,
   useReadContract,
-  useWriteContract,
+  useSendTransaction,
   useConnect,
   useChainId,
   useSwitchChain,
 } from "wagmi";
-import { parseEther, Hash } from "viem";
+import { parseEther, Hash, encodeFunctionData } from "viem";
 import { counterAbi } from "../contracts/abi";
-import { config } from "~/components/providers/WagmiProvider";
+import { config, DATA_SUFFIX } from "~/components/providers/WagmiProvider";
+
+// Helper: append ERC-8021 builder code suffix to calldata
+const withAttribution = (data: `0x${string}`) =>
+  `${data}${DATA_SUFFIX.slice(2)}` as `0x${string}`;
 import { base } from "wagmi/chains";
 import { formatUnits } from "viem";
 import { blocked } from "./blocked";
@@ -46,11 +50,11 @@ export default function Main() {
 
   const { address, isConnected } = useAccount();
   const {
-    writeContract,
+    sendTransaction,
     data: hash,
     error: writeError,
     isPending,
-  } = useWriteContract();
+  } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
@@ -225,11 +229,15 @@ export default function Main() {
     }
 
     try {
-      await writeContract({
-        address: COUNTER_CONTRACT_ADDRESS,
-        abi: counterAbi,
-        functionName: "incrementCounter",
-        args: [BigInt(context.user.fid), finalSignature],
+      sendTransaction({
+        to: COUNTER_CONTRACT_ADDRESS,
+        data: withAttribution(
+          encodeFunctionData({
+            abi: counterAbi,
+            functionName: "incrementCounter",
+            args: [BigInt(context.user.fid), finalSignature],
+          }),
+        ),
       });
     } catch (error) {
       console.error("Increment failed:", error);
@@ -244,23 +252,35 @@ export default function Main() {
     if (!depositAmount) return;
     try {
       // Step 1: Approve tokens
-      await writeContract(
+      sendTransaction(
         {
-          address: TOKEN_ADDRESS,
-          abi: [
-            {
-              inputs: [
-                { internalType: "address", name: "spender", type: "address" },
-                { internalType: "uint256", name: "amount", type: "uint256" },
+          to: TOKEN_ADDRESS,
+          data: withAttribution(
+            encodeFunctionData({
+              abi: [
+                {
+                  inputs: [
+                    {
+                      internalType: "address",
+                      name: "spender",
+                      type: "address",
+                    },
+                    {
+                      internalType: "uint256",
+                      name: "amount",
+                      type: "uint256",
+                    },
+                  ],
+                  name: "approve",
+                  outputs: [{ internalType: "bool", name: "", type: "bool" }],
+                  stateMutability: "nonpayable",
+                  type: "function",
+                },
               ],
-              name: "approve",
-              outputs: [{ internalType: "bool", name: "", type: "bool" }],
-              stateMutability: "nonpayable",
-              type: "function",
-            },
-          ],
-          functionName: "approve",
-          args: [COUNTER_CONTRACT_ADDRESS, parseEther(depositAmount)],
+              functionName: "approve",
+              args: [COUNTER_CONTRACT_ADDRESS, parseEther(depositAmount)],
+            }),
+          ),
         },
         {
           onSuccess: (hash: Hash) => {
@@ -277,11 +297,15 @@ export default function Main() {
     if (isApproved && depositAmount) {
       const deposit = async () => {
         try {
-          await writeContract({
-            address: COUNTER_CONTRACT_ADDRESS,
-            abi: counterAbi,
-            functionName: "depositTokens",
-            args: [parseEther(depositAmount)],
+          sendTransaction({
+            to: COUNTER_CONTRACT_ADDRESS,
+            data: withAttribution(
+              encodeFunctionData({
+                abi: counterAbi,
+                functionName: "depositTokens",
+                args: [parseEther(depositAmount)],
+              }),
+            ),
           });
           setDepositAmount("");
           setApproveHash(undefined);
@@ -292,7 +316,7 @@ export default function Main() {
       };
       deposit();
     }
-  }, [isApproved, depositAmount, writeContract, refetchContractBalance]);
+  }, [isApproved, depositAmount, sendTransaction, refetchContractBalance]);
 
   useEffect(() => {
     if (isConfirmed) {
@@ -314,11 +338,15 @@ export default function Main() {
   const handleUpdateTokenAmount = async () => {
     if (!newTokenAmount) return;
     try {
-      await writeContract({
-        address: COUNTER_CONTRACT_ADDRESS,
-        abi: counterAbi,
-        functionName: "updateTokenAmount",
-        args: [parseEther(newTokenAmount)],
+      sendTransaction({
+        to: COUNTER_CONTRACT_ADDRESS,
+        data: withAttribution(
+          encodeFunctionData({
+            abi: counterAbi,
+            functionName: "updateTokenAmount",
+            args: [parseEther(newTokenAmount)],
+          }),
+        ),
       });
       setNewTokenAmount("");
     } catch (error) {
@@ -329,11 +357,15 @@ export default function Main() {
   const handleUpdateCooldown = async () => {
     if (!newCooldownHours) return;
     try {
-      await writeContract({
-        address: COUNTER_CONTRACT_ADDRESS,
-        abi: counterAbi,
-        functionName: "updateCooldown",
-        args: [BigInt(newCooldownHours)],
+      sendTransaction({
+        to: COUNTER_CONTRACT_ADDRESS,
+        data: withAttribution(
+          encodeFunctionData({
+            abi: counterAbi,
+            functionName: "updateCooldown",
+            args: [BigInt(newCooldownHours)],
+          }),
+        ),
       });
       setNewCooldownHours("");
     } catch (error) {
